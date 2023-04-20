@@ -28,6 +28,8 @@
         _.#b=e(o),
         //setup object
         E.map(o,_.#a).set(''),
+        //register children
+        E.reg(o),
         //setup proxy
         new Proxy(
           //setup current
@@ -49,7 +51,7 @@
       
     //done with constructor
     }
-    
+ 
     //watch(path,callback,arguments)
     watch(p,c,...a){
       //p=path
@@ -509,7 +511,7 @@
         //loop action maps
         E.of(
           //traverse to get map
-          E.map(e),
+          E.map(e||o),
           //loop object paths
           (a,m)=>E.of(
             a,
@@ -607,7 +609,7 @@
                 [
                   //if function send return and arguments
                   E.get(f?v[0]:o),
-                  //otherwise send dew and old values
+                  //otherwise send new and old values
                   f?v[1]:a(e(v)),
                   //path string
                   p,
