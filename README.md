@@ -24,10 +24,14 @@ Three path types are allowed for triggering:
 Class handlers have for methods which are all optional:
 
 ```javascript
-handler.simplify(v) // simplifies the object
-handler.reconstitute(v) // reconstitutes the object from simplified object
-handler.compare(a,b) // compares two objects to determine whether something has changed when replacing
-handler.watchMethods() // returns a list of method names to watch and react to
+// simplifies the object to basic JSON(Number, String, Array, Object and Null)
+handler.simplify(v)
+// reconstitutes the object from simplified object
+handler.reconstitute(v) 
+// compares two objects to determine whether something has changed (used to determine reactivity)
+handler.compare(a,b) 
+// returns an array of method names to watch and react to changes
+handler.watchMethods()
 ```
 
 There are four methods on the reactive object itself:
