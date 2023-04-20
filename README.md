@@ -64,8 +64,10 @@ rObj.restore(JSONArray) // Argument is optional
 Callback have the following signatures:
 
 ```javascript
-callback(newValue, OldValue, path, ...extra) // Direct and Wildcard callbacks use this signature
-callback(returnValue, callArgs, path, ...extra) // Function callbacks replace new and old with return value and call arguments.
+// direct and wildcard callbacks use this signature
+callback(newValue, OldValue, path, ...extra)
+// function callbacks replace new and old with return value and call arguments.
+callback(returnValue, callArgs, path, ...extra)
 ```
 
 Caveats and things to note:
