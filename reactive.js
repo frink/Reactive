@@ -357,6 +357,9 @@
   i=(a,b=Object)=>a instanceof b,
   //values map
   v=((w,s,r,c)=>new Map([
+    [Array,{
+      [w]:_=>['push','pop','shift','unshift']
+    }],
     //Dates
     [Date,{
       [s]:v=>v.toJSON(),
