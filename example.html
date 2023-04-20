@@ -1,0 +1,27 @@
+<html>
+  <head>
+    <title>Reactive Proxy Tests</title>
+    <script src="reactive.js"/>
+  </head>
+  <body>
+    <h1>Play with result in console...</h1>
+    <script>
+        let o={
+          objet: {
+            text:"Reactive proxy rocks"
+          },
+          array:[40,41,42],
+          map:new Map,
+          set:new Set
+        };
+       
+        let R1 = new Reactive(o);
+        let R2 = new Reactive(o);
+        
+        R1.watch('obj.*',(...a)=>console.log('R1.obj changed',...a));
+
+        R2.obj.newthing={new:"object"};
+
+    </script>
+  </body>
+</html>
