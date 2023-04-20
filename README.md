@@ -34,10 +34,28 @@ There are four methods on the reactive object itself:
 
 ```javascript
 rObj.watch(path, callback, ...extra) // extra is optional
-rObj.unwatch(path, callback) // both are optional allowing to clear all watchers if nothing is passed
-rObj.backup(key, storageObject=localStorage) // when nothing is passed the backup returns a flattened JSON array. When only key is passed it synchronizes to that key in localStorage. When a storage object is passed it synchronizes to the specified key using the storage setItem() and getItem() methods allowing for both transient and In all cases backup checkpoints to an internal backup.
-rObj.restore(JSONArray) // When nothing is passed it restores from the internal checkpoint. 
-``
+rObj.unwatch(path, callback) // both are optional
+/**
+ * When only path is given the unwatch deletes all reactions for that path.
+ * When the callback is also given the unwatch is only applied for that single
+ * reaction. When no arguments are given the unwatch clears ALL reactions.
+ */
+rObj.backup(key, storageObject=localStorage) //both key and storageObject are optional
+/**
+ * When nothing is passed the backup returns a flattened JSON Array
+ * repensenting the Reactive Object. When only key is passed it synchronizes
+ * to that key in localStorage. When a storage object is passed it
+ * synchronizes to the specified key using the storage setItem() and
+ * getItem() methods allowing for both transient and long term storage.
+ * In all cases backup saves a checkpoints to an internal backup.
+ */
+rObj.restore(JSONArray) // Argument is optional
+/**
+ * When nothing is passed it restores from the internal checkpoint.
+ * We use flattened JSON to allow circular references and complex
+ * objects to be represented by JSON.
+ */
+```
 
 Callback have the following signatures:
 
@@ -46,6 +64,8 @@ callback(newValue, OldValue, path, ...extra) // Direct and Wildcard callbacks us
 callback(returnValue, callArgs, path, ...extra) // Function callbacks replace new and old with return value and call arguments.
 ```
 
-All reactive objects trigger one another. Reaction order is longest to shortest and then alphabetical so the order is somewhat deterministic. However, since objects could be mounted at different points in the chain there is no guarantee that one reaction won't happen before another for different paths.
+Caveats and things to note:
 
-Circular references ARE allowed. However, the deeper child paths will never fire to avoid triggering an endless loop.
+- All reactive objects trigger each another.
+- Reaction order is longest to shortest and then alphabetical so the order is somewhat deterministic.
+- Circular references ARE allowed but the deeper child paths will never fire to avoid triggering an endless loop.
