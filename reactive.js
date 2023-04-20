@@ -24,6 +24,8 @@
       
       //return
       return(_=>(
+        //must be a raw object
+        o=E.raw(o),
         //add backup
         _.#b=e(o),
         //setup object
@@ -163,7 +165,7 @@
         //traverse names
         (o,r)=>o?.[r],
         //start with raw
-        o.raw||o
+        E.raw(o)
       );
       //values if name is star
       v=n=='*'
@@ -226,9 +228,9 @@
             E.on(
               s,
               //check if inherited from parent
-              (r,k)=>r||=i(v,k)
+              (r,p)=>r||=i(v,p)
                 //if so set name
-                ?z[k.name]=c(s.get(k)(v))
+                ?z[p.name]=c(s.get(p)(v))
                 //otherwise use return
                 :r,
               //start as zero
@@ -265,7 +267,7 @@
     //done with collector
     ),
     //now collect object
-    c($),
+    c(E.raw($)),
     //finally strigify the array
     JSON.stringify(r)
   //populate jump sorce and substitutions
@@ -273,7 +275,7 @@
     //jump source
     new Map,
     //substitution map
-    new Map(E.on(v,k=>[k,v.get(k).simplify||(_=>_)])),
+    new Map(E.on(v,k=>[k,v.get(k).simplify]).filter(m=>m[1]).reverse()),
     //return array
     []
   //done with encoder
@@ -343,7 +345,7 @@
   //done activating object
   ),
   //collate names
-  c=(l,n)=>l?l+'.'+n:n,
+  c=(l,n)=>l&&n.length?l+'.'+n:n,
   //traverse map
   t=(t,...m)=>m.reduce(
     //i=initial map
@@ -366,32 +368,28 @@
     [Date,{
       [s]:v=>v.toJSON(),
       [r]:v=>new Date(v),
-      [c]:(a,b)=>a+''==b,
       [w]:_=>Object.getOwnPropertyNames(Date.prototype)
         .filter(k=>k.startsWith('set'))
     }],
     //Regular Expressions
     [RegExp,{
       [s]:v=>[v.source,v.flags],
-      [r]:v=>new RegExp(...v),
-      [c]:(a,b)=>a+''==b,
+      [r]:v=>new RegExp(...v)
     }],
     //Maps
     [Map,{
       [s]:v=>[...v.entries()],
       [r]:v=>new Map(v),
-      [c]:(a,b)=>v(a.entries(),b.entries()),
       [w]:_=>['set','delete','clear']
     }],
     //Sets
     [Set,{
       [s]:v=>[...v.values()],
-      [r]:v=>new Set(v),
-      [c]:(a,b)=>v(a.values(),b.values()),
+      [r]:v=>new Set([...v]),
       [w]:_=>['add','delete','clear']
     }]
   //done with value map
-  ]))('watchMethods','simplify','reconstitute','compare'),
+  ]))('watchMethods','simplify','reconstitute'),
   //encapsulator
   E={
     //prototype is Reactive.prototype
@@ -432,7 +430,7 @@
       u=n.split('.').pop(),
 
       //entity could be an existing Reactive
-      e=e.raw||e,
+      e=E.raw(e),
       //set the name and heldover parents
       p=o||p,
       //object is always an object
@@ -471,25 +469,26 @@
     //delete are just setting to undefined
     deleleProperty:(o,n,e)=>E.set(o,n,E.U,e),
     //trap execution
-    apply:(f,o,r,g=new Map,s,h)=>(
+    apply:(f,o,r,g=new Map,s=new Set,h,w)=>(
       //save arguments
-      s=a(e(r)),
+      w=a(e(r)),
       //object target must be raw
       o=o.raw,
       //set handler
-      h=E.as(
-        //if undefined we still need a function 
-        {[w]:_=>[]},
+      h=E.in(
         //search for handler
-        E.on(v,(a,r)=>a||i(o,r)&&v.get(r),0)
-      //return handler
+        E.on(v,(a,r)=>a||i(o,r)&&v.get(r).watchMethods(),0)||[],
+        //search for name in watched
+        f.name
       ),
+      //enqueue reaction parent if watch method
+      h&&E.enq(o,'*',o,g,s),
       //run function
       r=f.apply(o,r),
-      //if function name in handler reactive enqueue reactions
-      E.in(h.watchMethods(),f.name)&&E.enq([r,s],f.name+'()',o,g),
-      //run reactions
-      E.run(g),
+      //enqueues reaction if watched method
+      h&&E.enq([r,w],f.name+'()',o,g,s),
+      //if we are watching run reactions
+      h&&E.run(g),
       //return result
       r
     //done with appy function
@@ -568,7 +567,7 @@
     ),
     //enqueue reactions
     enq:(v,l,o,g,s=new Set,d,n,r,f)=>(
-      //v=urrent value
+      //v=value currently
       //l=label path
       //o=object parent
       //g=gathered reactions
@@ -586,7 +585,7 @@
       n!='*'&&!f&&d.push(n),
       
       //traverse objects
-      i(o)&&!s.has(o)&&E.of(
+      i(o)&&!s.has(v)&&E.of(
         //get object from map
         E.map(o),
         //loop path map
@@ -597,6 +596,8 @@
           (u,p)=>(
             //maintain sanity
             i(v)&&s.add(v),
+            //debug
+            //console.log('enqueue:',c(p,l),o),
             //enqueue parents
             E.enq(o,c(d.length>1?r:p.split('.').pop(),'*'),u||o,g,s),
             //loop paths from the action map
@@ -608,7 +609,7 @@
                 //setup values array
                 [
                   //if function send return and arguments
-                  E.get(f?v[0]:o),
+                  f?v[0]:o,
                   //otherwise send new and old values
                   f?v[1]:a(e(v)),
                   //path string
@@ -617,7 +618,7 @@
                   d
                 //done with values
                 ],
-                //now saved argumetns
+                //now saved arguments
                 ...n
               //done enqueuing action
               ])
@@ -653,6 +654,8 @@
               //get values
               v=a.shift();
 
+              //console.log('trigger:',v[2]),
+
               //loop path array
               v.pop().map(
                 //dig deep to path
@@ -660,8 +663,15 @@
               //done looping
               );
 
-              //run callback with values and attributes
-              c(...v,...a);
+              //if something changed
+              if(v[2].slice(-2)=='()'||!E.is(...v)){
+                //wrap returned argument as reactive
+                v[0]=E.get(v[0]);
+                //run callback
+                c(...v,...a)
+              //done with check
+              }
+            //done with callback
             }
           //done looping callbacks
           )
@@ -673,23 +683,41 @@
       d
     //done with run function
     ),
-    
+    //get raw object
+    raw(o){
+      //if it's reactive
+      return i(o,R)
+        //get raw object
+        ?o.raw
+        //otherwise it's fine
+        :o
+    },
+
     //compare a and b
-    is:(a,b)=>(
-      //if values map has it
-      v.has(a)
-        //use comparison function
-        ?a.__proto__==b.__proto__&&(v.get(a).compare||E.is)(a,b)
-        //otherwise if not both objects
-        :!i(a)||!i(b)
-          //just compare with simple equals
-          ?a===b
-          //otherwise
-          :E.on(a).length!=E.on(b).length
-            //return negative
-            ?0
-            //otherwise check each key for a perfect match
-            :E.on(c,(o,k)=>o&&E.is(a[k],b[k]),1)
+    is:(a,b,c)=>(
+      //otherwise if not both objects
+      !i(a)||!i(b)
+        //just compare with simple equals
+        ?a===b
+        //otherwise if same type
+        :a.__proto__==b.__proto__
+          //if we can use simplification
+          ?(c=E.on(v).reverse().reduce(
+            //find the simplifier that matches
+            (o,r)=>o||i(a,r)&&v.get(r),
+            //or fail if not found
+            0
+          ))
+            //process as simplifier
+            ?E.is(c(a),c(b))
+            //fallback to comparing keys
+            :E.on(a).length==E.on(b).length
+              //check each key for a perfect match
+              ?E.on(c,(o,k)=>o&&E.is(a[k],b[k]),1)
+              //if not we are done
+              :0
+        //if prototypes don't match we cant
+        :0
     //done with compare function
     ),
     //shorten object assign

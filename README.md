@@ -25,7 +25,7 @@ rObj.watch("obj.child.name",callback)
 // Wildcard paths
 rObj.watch("obj.any_child.*",callback)
 // Function paths
-rObj("map.set.call()",callback)
+rObj("map.set()",callback)
 ```
 
 Class handlers have for methods which are all optional:

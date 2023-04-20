@@ -14,13 +14,81 @@
           map:new Map,
           set:new Set
         };
-       
+
         let R1 = new Reactive(o);
         let R2 = new Reactive(o);
-        
-        R1.watch('obj.*',(...a)=>console.log('R1.obj changed',...a));
+
+        /*
+        R1.watch(
+            'obj.*',
+            (...a)=>console.log('R1.obj changed',...a)
+        );
 
         R2.obj.newthing={new:"object"};
+
+        R1.watch(
+            'obj.newthing',
+            (...a)=>console.log('NEWTHING',...a),
+            ['blue','green','red']
+        );
+
+        let Rset = new Reactive(R1.set);
+        let Rmap = new Reactive(R2.map);
+
+        let Robj = new Reactive(o.obj);
+
+        Robj.restore('[{}]');
+
+        R1.watch(
+            'set.*',
+            (n,o)=>console.log('Object KEYS in Set:',n,o)
+        );
+
+        Rmap.watch(
+            'set()',
+            (_,[k])=>Rset.add(k)
+        );
+
+        Rset.watch(
+            'remove()',
+            (_,[k])=>(
+              R2.map.remove(k),
+              console.log(`R2.map.remove(${k})`)
+            )
+        );
+        R2.watch(
+          'obj.*',
+          (n,o)=>Object.keys(n).map(
+            k=>!Reactive.compare(n[k],o[k])&&(
+              Rmap.set(k,n.raw[k])
+            )
+          )
+        );
+        R2.watch(
+          'obj.*',
+          (n,o)=>Object.keys(o).map(
+            k=>n[k]==undefined&&(
+              R1.set.remove(k),
+              console.log(`R1.set.add(${k})`)
+            )
+          )
+        );
+
+        Robj.a=1;
+        Robj.a=2;
+        Robj.a=2;
+        Robj.a=2;
+        Robj.b=3;
+
+        delete Robj.a;
+        delete Robj.b;
+
+        Robj.newthing='cool!';
+
+        Robj.watch('text',v=>console.log(v.toUpperCase()));
+
+        R1.restore();
+        */
 
     </script>
   </body>
