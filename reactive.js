@@ -60,6 +60,8 @@
       //c=callback
       //a=arguments
 
+      console.log('WATCH',p,c,...a);
+
       //register action for path
       return !!t(this.#a,p).set(c,a)
       
@@ -71,6 +73,8 @@
       //p=path
       //c=callback
 
+      console.log('UNWATCH',p,c);
+
       //reduce action to boolean
       return !!(
         //do we have a path
@@ -78,7 +82,7 @@
           //find it or fake it
           ?this.#a.get(p)||new Map
           //or use everything
-          :(c=0)&&this.#a
+          :(c=0,this.#a)
       //find action
       )[
         //do we have a callback
@@ -126,8 +130,12 @@
     restore(o){
       //internal shortener
       const _=this,
-      //backup object
-      b=a(o||_.#b),
+      //if object is passed
+      b=i(o)
+        //use as is
+        ?o
+        //otherwise assemble the object
+        :a(o||_.#b),
       //current object
       c=_.#c;
 
@@ -139,7 +147,13 @@
       
     //done with restore method
     }
-    
+
+    //create a new map of the current reactive obj
+    clone(){
+      //generate a new data tree and pass to constructor
+      return new this.constructor(a(e(this.#c)))
+    }
+ 
     //register(object, handler)
     static register(o,h){
       //register handler
@@ -240,8 +254,8 @@
               v,
               //for each zap
               k=>z[
-                //if it's an arroa
-                v.map
+                //if it's an array
+                i(v,Array)
                   //a key is the the key
                   ?k
                   //otherwise collect key
@@ -259,7 +273,7 @@
     //set zap host
     )(
       //if value is an array
-      v?.map
+      i(v,Array)
         //zap is array
         ?[]
         //otherwise object
@@ -280,7 +294,7 @@
     []
   //done with encoder
   ),
-  //activate to object
+  //assemble to object
   a=$=>((s,r,c)=>(
     //construct object
     c=v=>(
@@ -303,7 +317,7 @@
                 //get value sub
                 v[
                   //if array
-                  v.map
+                  i(v,Array)
                     //key is a number
                     ?k
                     //otherwise key is a retrurn value
@@ -311,7 +325,7 @@
                 //set return value
                 ]=r[v[k]],
                 //if not a map delete the key
-                !v.map&&(delete v[k]),
+                !i(v,Array)&&(delete v[k]),
                 //return object
                 v
               //done processing object
@@ -550,14 +564,14 @@
               //delete name for object
               E.map(o,m).delete(c(p,n.split('.').pop())),
               //clean-up action map
-              !E.map(o,m).size&&t($,o).delete(m)
+              !E.map(o,m).size&&E.map(o).delete(m)
             //done deleting
             )
           //done looping paths
           )
         //done looping action maps
         ),
-        //clean-up object
+        //clean-up object maps
         [e,o].map(o=>!E.map(o).size&&E.map().delete(o)),
         //also release children
         E.on(o,k=>E.rel(o[k],c(n,k),o,s))
@@ -628,7 +642,7 @@
           )
         //done looping path map
         )
-      //done traversing objects
+      //done traversinguobjects
       )
     //done with enqueuing reactions
     ),
@@ -659,18 +673,18 @@
               //loop path array
               v.pop().map(
                 //dig deep to path
-                k=>v[0]=v[0][k]
+                k=>v[0]=v[0]?.[k]
               //done looping
               );
 
               //if something changed
-              if(v[2].slice(-2)=='()'||!E.is(...v)){
+              //if(v[2].slice(-2)=='()'||!E.is(...v)){
                 //wrap returned argument as reactive
                 v[0]=E.get(v[0]);
                 //run callback
                 c(...v,...a)
               //done with check
-              }
+              //}
             //done with callback
             }
           //done looping callbacks
@@ -704,7 +718,7 @@
           //if we can use simplification
           ?(c=E.on(v).reverse().reduce(
             //find the simplifier that matches
-            (o,r)=>o||i(a,r)&&v.get(r),
+            (o,r)=>o||i(a,r)&&v.get(r).simplify,
             //or fail if not found
             0
           ))

@@ -8,7 +8,7 @@
     <script>
         let o={
           obj: {
-            text:"Reactive proxy rocks"
+            text:"Reactive objects rock your world!"
           },
           arr:[40,41,42],
           map:new Map,
@@ -16,16 +16,19 @@
         };
 
         let R1 = new Reactive(o);
-        let R2 = new Reactive(o);
-
         /*
+        let R2 = new Reactive(o);
+        let R3 = R1.clone();
+        */
+
         R1.watch(
             'obj.*',
             (...a)=>console.log('R1.obj changed',...a)
         );
 
-        R2.obj.newthing={new:"object"};
+        R1.obj.newthing={new:"object"};
 
+        /*
         R1.watch(
             'obj.newthing',
             (...a)=>console.log('NEWTHING',...a),
@@ -50,10 +53,10 @@
         );
 
         Rset.watch(
-            'remove()',
+            'delete()',
             (_,[k])=>(
-              R2.map.remove(k),
-              console.log(`R2.map.remove(${k})`)
+              R2.map.delete(k),
+              console.log(`R2.map.delete(${k})`)
             )
         );
         R2.watch(
@@ -68,7 +71,7 @@
           'obj.*',
           (n,o)=>Object.keys(o).map(
             k=>n[k]==undefined&&(
-              R1.set.remove(k),
+              R1.set.delete(k),
               console.log(`R1.set.add(${k})`)
             )
           )
@@ -85,11 +88,10 @@
 
         Robj.newthing='cool!';
 
-        Robj.watch('text',v=>console.log(v.toUpperCase()));
+        */
+        R1.watch('obj.text',v=>setTimeout(_=>console.log(v.toUpperCase()),100));
 
         R1.restore();
-        */
-
     </script>
   </body>
 </html>
