@@ -17,9 +17,14 @@ Reactive.register(class, handler) // registers new reactive handlers for a given
 
 Three path types are allowed for triggering:
 
-- Direct paths "obj.child.name"
-- Wildcard paths "obj.any_child.*"
-- Function paths "map.set.call()"
+```javascript
+// Direct paths
+rObj.watch("obj.child.name",callback)
+// Wildcard paths
+rObj.watch("obj.any_child.*",callback)
+// Function paths
+rObj("map.set.call()",callback)
+```
 
 Class handlers have for methods which are all optional:
 
