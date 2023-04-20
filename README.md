@@ -11,8 +11,10 @@ robj = new Reactive(obj);
 There are two static methods on the class:
 
 ```javascript
-Reactive.trigger(rObj, path) // triggers a reaction at the specified path
-Reactive.register(class, handler) // registers new reactive handlers for a given class
+// triggers a reaction at the specified path
+Reactive.trigger(rObj, path)
+// registers new reactive handlers for a given class
+Reactive.register(class, handler)
 ```
 
 Three path types are allowed for triggering:
