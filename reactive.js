@@ -695,23 +695,27 @@
     //forEach traverser
     of:(o,f)=>(o||[]).forEach(f),
     //loop traversal
-    on:(o,m=_=>_,r)=>(
-      //if object is map
-      i(o,Map)
-        //expand keys
-        ?[...o.keys()]
-        //otherwise use Object keys
-        :Object.keys(o||{})
-    //done with heys
-    )[
-      //if no reduce source
-      r===E.U
-        //map
-        ?'map'
-        //otherwise reduce
-        :'reduce'
-    //now call function with mapped function and return value
-    ](m,r),
+    on:(o,m=_=>_,r)=>i(o)
+      //if object loop get keys
+      ?(
+        //if is map
+        i(o,Map)
+          //expand keys
+          ?[...o.keys()]
+          //otherwise use Object keys
+          :Object.keys(o||{})
+      //done with heys
+      )[
+        //if no reduce source
+        r===E.U
+          //map
+          ?'map'
+          //otherwise reduce
+          :'reduce'
+      //now call function with mapped function and return value
+      ](m,r)
+      //
+      :o,
     //array includes
     in:(i,n)=>(i||[]).includes(n),
     //shorten prototype
