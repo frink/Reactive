@@ -11,23 +11,34 @@ robj = new Reactive(obj);
 There are two static methods on the class:
 
 ```javascript
-Reactive.trigger(rObj, path) // triggers a reaction at the specified path
-Reactive.register(class, handler) // registers new reactive handlers for a given class
+// triggers a reaction at the specified path
+Reactive.trigger(rObj, path)
+// registers new reactive handlers for a given class
+Reactive.register(class, handler)
 ```
 
 Three path types are allowed for triggering:
 
-- Direct paths "obj.child.name"
-- Wildcard paths "obj.any_child.*"
-- Function paths "map.set.call()"
+```javascript
+// Direct paths
+rObj.watch("obj.child.name",callback)
+// Wildcard paths
+rObj.watch("obj.any_child.*",callback)
+// Function paths
+rObj("map.set.call()",callback)
+```
 
 Class handlers have for methods which are all optional:
 
 ```javascript
-handler.simplify(v) // simplifies the object
-handler.reconstitute(v) // reconstitutes the object from simplified object
-handler.compare(a,b) // compares two objects to determine whether something has changed when replacing
-handler.watchMethods() // returns a list of method names to watch and react to
+// simplifies the object to basic JSON(Number, String, Array, Object and Null)
+handler.simplify(v)
+// reconstitutes the object from simplified object
+handler.reconstitute(v) 
+// compares two objects to determine whether something has changed (used to determine reactivity)
+handler.compare(a,b) 
+// returns an array of method names to watch and react to changes
+handler.watchMethods()
 ```
 
 There are four methods on the reactive object itself:
@@ -60,8 +71,10 @@ rObj.restore(JSONArray) // Argument is optional
 Callback have the following signatures:
 
 ```javascript
-callback(newValue, OldValue, path, ...extra) // Direct and Wildcard callbacks use this signature
-callback(returnValue, callArgs, path, ...extra) // Function callbacks replace new and old with return value and call arguments.
+// direct and wildcard callbacks use this signature
+callback(newValue, OldValue, path, ...extra)
+// function callbacks replace new and old with return value and call arguments.
+callback(returnValue, callArgs, path, ...extra)
 ```
 
 Caveats and things to note:
