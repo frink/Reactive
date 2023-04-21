@@ -50,7 +50,7 @@
         )
       //populate closure with this
       ))(this)
-      
+
     //done with constructor
     }
  
@@ -60,7 +60,7 @@
       //c=callback
       //a=arguments
 
-      console.log('WATCH',p,c,...a);
+      //console.log('WATCH',p,c,...a);
 
       //register action for path
       return !!t(this.#a,p).set(c,a)
@@ -73,7 +73,7 @@
       //p=path
       //c=callback
 
-      console.log('UNWATCH',p,c);
+      //console.log('UNWATCH',p,c);
 
       //reduce action to boolean
       return !!(
@@ -194,6 +194,7 @@
       return E.run(g)
     //done with register method
     }
+    
     //compare two obects fot changes
     static compare(a,b){
       //run interna compare
@@ -308,7 +309,7 @@
           ?r[v]
           //loop through the keys
           :E.on(
-            //for falue
+            //for value
             v,
             //object key is number
             (v,k)=>parseInt(k)>=0
@@ -353,7 +354,9 @@
   //populate substitutions and reference array
   ))(
     //substitution map
-    new Map(E.on(v,k=>[k.name,v.get(k).reconstitute||(_=>_)])),
+    new Map([['#',parseInt]].concat(
+      E.on(v,k=>[k.name,v.get(k).reconstitute||(_=>_)])
+    )),
     //reference array
     JSON.parse($)
   //done activating object
@@ -446,7 +449,7 @@
       //entity could be an existing Reactive
       e=E.raw(e),
       //set the name and heldover parents
-      p=o||p,
+      p??=o,
       //object is always an object
       o??={},
 
@@ -611,7 +614,7 @@
             //maintain sanity
             i(v)&&s.add(v),
             //debug
-            //console.log('enqueue:',c(p,l),o),
+            //console.log('enqueue:',c(p,l),c(p,n),c(p,v?n:l)),
             //enqueue parents
             E.enq(o,c(d.length>1?r:p.split('.').pop(),'*'),u||o,g,s),
             //loop paths from the action map
@@ -703,7 +706,7 @@
       return i(o,R)
         //get raw object
         ?o.raw
-        //otherwise it's fine
+        //otherwise it's fine
         :o
     },
 
@@ -739,27 +742,29 @@
     //forEach traverser
     of:(o,f)=>(o||[]).forEach(f),
     //loop traversal
-    on:(o,m=_=>_,r)=>i(o)
-      //if object loop get keys
-      ?(
-        //if is map
-        i(o,Map)
-          //expand keys
-          ?[...o.keys()]
-          //otherwise use Object keys
-          :Object.keys(o||{})
-      //done with heys
-      )[
-        //if no reduce source
-        r===E.U
-          //map
-          ?'map'
-          //otherwise reduce
-          :'reduce'
-      //now call function with mapped function and return value
-      ](m,r)
-      //
-      :o,
+    on:(o,m=_=>_,r)=>(
+      i(o)
+        //if object loop get keys
+        ?(
+          //if is map
+          i(o,Map)
+            //expand keys
+            ?[...o.keys()]
+            //otherwise use Object keys
+            :Object.keys(o||{})
+        //done with heys
+        )[
+          //if no reduce source
+          r===E.U
+            //map
+            ?'map'
+            //otherwise reduce
+            :'reduce'
+        //now call function with mapped function and return value
+        ](m,r)
+        //
+        :o
+    ),
     //array includes
     in:(i,n)=>(i||[]).includes(n),
     //shorten prototype
