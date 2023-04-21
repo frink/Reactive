@@ -2,9 +2,23 @@
   <head>
     <title>Reactive Proxy Tests</title>
     <script src="reactive.js"></script>
+    <style>
+      body {
+        background: #111122;
+        color:#ffffcc;
+        font-family:sans;
+        font-size:16pt;
+        margin: 40pt;
+      }
+    </style>
   </head>
   <body>
-    <h1>Play with result in console...</h1>
+    <h1>Reactive objects playground...</h1>
+    <p>Most of the exciting stuff happens behind the scenes.</p>
+    <p>Open the console and study the messages there.</p>
+    <p>Compare it with the sourcecode and you will see the real power.</p>
+    <p>Eventually there will be more here. But for the time being:</p>
+    <h2>Use the source Luke!!!</h2>
     <script>
         let o={
           obj: {
@@ -14,44 +28,62 @@
           map:new Map,
           set:new Set
         };
-
+        
+        //setup first object
         let R1 = new Reactive(o);
-        /*
-        let R2 = new Reactive(o);
+        //second is an empty object
+        let R2 = new Reactive({});
+        // we can clone the object and it will be separate
         let R3 = R1.clone();
-        */
+        // we can store a backup to a string
+        let B1 = R1.backup();
 
+        // we can assign one reactive to another
+        // the children will trigger the same but the parents will be different
+        Object.assign(R2,R1);
+        
+        //we can watch obj
         R1.watch(
             'obj.*',
             (...a)=>console.log('R1.obj changed',...a)
         );
 
-        R1.obj.newthing={new:"object"};
+        //we can set it from another reactive object and it will trigger
+        R2.obj.newthing={new:"object"};
 
-        /*
-        R1.watch(
+        //we capas extra variables to the tractions
+        R2.watch(
             'obj.newthing',
             (...a)=>console.log('NEWTHING',...a),
-            ['blue','green','red']
+            'blue','green','red'
         );
 
+        //we can create sub reactives from current object
         let Rset = new Reactive(R1.set);
         let Rmap = new Reactive(R2.map);
-
         let Robj = new Reactive(o.obj);
-
+      
+        //however if we don't assign a new reactive
+        let obj = R1.obj;
+        //it does have watch,unwatch,clone,backup or restore
+        let objWatch=Robj.watch;
+      
+        //we can restore a subobject with a blank object
         Robj.restore('[{}]');
 
-        R1.watch(
-            'set.*',
+        //we can watch a sub object
+        Rset.watch(
+            '*',
             (n,o)=>console.log('Object KEYS in Set:',n,o)
         );
 
+        //or a method of a sub object
         Rmap.watch(
             'set()',
             (_,[k])=>Rset.add(k)
         );
-
+      
+        //they all point to the same
         Rset.watch(
             'delete()',
             (_,[k])=>(
@@ -59,17 +91,23 @@
               console.log(`R2.map.delete(${k})`)
             )
         );
+      
+        //You can use use the internal comparison
         R2.watch(
           'obj.*',
           (n,o)=>Object.keys(n).map(
+            //for example only do Rmap.set() when values change
             k=>!Reactive.compare(n[k],o[k])&&(
               Rmap.set(k,n.raw[k])
             )
           )
         );
-        R2.watch(
+      
+        //we can also check for deletions of keys
+        R1.watch(
           'obj.*',
           (n,o)=>Object.keys(o).map(
+            //deleted will have the new value undefined
             k=>n[k]==undefined&&(
               R1.set.delete(k),
               console.log(`R1.set.add(${k})`)
@@ -77,20 +115,24 @@
           )
         );
 
+        //here we test out repeated setting
         Robj.a=1;
         Robj.a=2;
         Robj.a=2;
         Robj.a=2;
         Robj.b=3;
 
+        //and deleting
         delete Robj.a;
         delete Robj.b;
 
+        //remember that old watch we set - still works even tho we deleted the key
         Robj.newthing='cool!';
 
-        */
-        R1.watch('obj.text',v=>setTimeout(_=>console.log(v.toUpperCase()),100));
+        // now for the grand fanale we'll react to the restoration back to the original object
+        R1.watch('obj.text',(v,...a)=>setTimeout(_=>console.log((v+'').toUpperCase(),a),100));
 
+        //ready, set, go!
         R1.restore();
     </script>
   </body>
