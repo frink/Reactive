@@ -20,40 +20,39 @@
 
     //constructor(object)
     constructor(o){
-      //o=object
-      
-      //return
-      return(_=>(
-        //must be a raw object
-        o=E.raw(o),
-        //add backup
-        _.#b=e(o),
-        //setup object
-        E.map(o,_.#a).set(''),
-        //register children
-        E.reg(o),
-        //setup proxy
-        new Proxy(
-          //setup current
-          _.#c=E.get(o),
-          //setup root handler
-          {
-            //if requesting function
-            get:(o,n)=>_[n]?.call
-              //return bound funtion
-              ?_[n].bind(_)
-              //otherwise return proxied
-              :_[n]||o[n]
-          //done with root handler
-          }
-        //done with proxy
-        )
-      //populate closure with this
-      ))(this)
-
+        //o=object
+        
+        //return
+        return(_=>(
+          //must be a raw object
+          o=E.raw(o),
+          //add backup
+          _.#b=e(o),
+          //setup object
+          E.map(o,_.#a).set(''),
+          //register children
+          E.reg(o),
+          //setup proxy
+          new Proxy(
+            //setup current
+            _.#c=E.get(o),
+            //setup root handler
+            {
+              //if requesting function
+              get:(o,n)=>_[n]?.call
+                //return bound funtion
+                ?_[n].bind(_)
+                //otherwise return proxied
+                :_[n]||o[n]
+            //done with root handler
+            }
+          //done with proxy
+          )
+        //populate closure with this
+        ))(this)
     //done with constructor
     }
- 
+
     //watch(path,callback,arguments)
     watch(p,c,...a){
       //p=path
@@ -64,10 +63,9 @@
 
       //register action for path
       return !!t(this.#a,p).set(c,a)
-      
     //done with watch method
     }
-    
+
     //unwatch(path,callback)
     unwatch(p,c){
       //p=path
@@ -93,10 +91,9 @@
           :'clear'
       //pass callback
       ](c)
-      
     //done with unwatch method
     }
-    
+
     //backup(key, storage)
     backup(k,s=localStorage){
       //k=key
@@ -115,17 +112,16 @@
 
       //load data from backup to responsive
       E.as(
-        //assign live data
-        r,
-        //the backup
-        a(s.getItem(k)||_.#b)
-      );
+          //assign live data
+          r,
+          //the backup
+          a(s.getItem(k)||_.#b)
+          );
       //setup automatic saving to storage
       _.watch('*',n=>s.setItem(k,e(r)))
-      
     //done with backup method
     }
-    
+
     //restore(object)
     restore(o){
       //internal shortener
@@ -139,12 +135,11 @@
       //current object
       c=_.#c;
 
-      //search for any extrak keys and delete
+      //search for any extra keys and delete
       E.on(E.as(c,b),k=>b[k]===a.U&&delete c[k])
 
       //checkpoint backup
       _.backup()
-      
     //done with restore method
     }
 
@@ -152,16 +147,17 @@
     clone(){
       //generate a new data tree and pass to constructor
       return new this.constructor(a(e(this.#c)))
+    //done with clone method
     }
  
-    //register(object, handler)
+    
     static register(o,h){
       //register handler
       v.set(o,h)
     //done with register method
     }
-    
-    //trigger(object path)
+
+    //trigger object with path
     static trigger(o,p='*'){
       let v,
       //list of names for path
@@ -192,110 +188,136 @@
       E.enq(n.endsWith('()')?[E.U,[]]:v,n,o,g);
       //run reactions
       return E.run(g)
-    //done with register method
+    //done with trigger method
     }
-    
+
     //compare two obects fot changes
     static compare(a,b){
-      //run interna compare
+      //run internal compare
       return E.is(a,b)
     //done with compare function
     }
-
   //done with class
   },
-  //encode to string
-  e=$=>((j,s,r,c)=>(
-    //if jump reference exists
-    c=v=>(z=>
-      j.has(v)
-        //get the value
-        ?j.get(v)
-        //otherwise
-        :(
-          //set the jump reference
-          j.set(
-            //from value
-            v,
-            //push return value
-            r.push(
-              //if value is a number
-              typeof v=='number'
-                //convert to string (Infinity, Epsilon, NaN)
-                ?{'#':v+''}
-                //if its an object
-                :i(v)
-                  //push zap object
-                  ?z
-                  //if undefined
-                  :v==r.U
-                    //reference undefined
-                    ?-1
-                    //otherwise return value
-                    :v
-            //set as key
-            )-1
-          //set the jump reference
-          ),
-          //if it's an object
-          i(v)&&(
-            //loop through possible parents
-            E.on(
-              s,
-              //check if inherited from parent
-              (r,p)=>r||=i(v,p)
-                //if so set name
-                ?z[p.name]=c(s.get(p)(v))
-                //otherwise use return
-                :r,
-              //start as zero
-              0
-            //if no parent found loop keys
-            )||E.on(
-              v,
-              //for each zap
-              k=>z[
-                //if it's an array
-                i(v,Array)
-                  //a key is the the key
-                  ?k
-                  //otherwise collect key
-                  :c(k)
-                //set collected value
-                ]=c(v[k])
-            //done looping keys
+  //encode to JSON Array string
+  e=$=>(
+    //internal function
+    (j,s,r,c)=>(
+      //j=jump source map
+      //s=substitution map
+      //r=return array
+      //c=collector function
+
+      //define collector function
+      c=v=>(
+        //v=value to collect
+
+        //internal zap function
+        z=>
+          //z=zap destination
+
+          //if jump map has the value
+          j.has(v)
+            //get the value assignment
+            ?j.get(v)
+            //otherwise this is a new jump
+            :(
+              //set the jump reference
+              j.set(
+                //from value
+                v,
+                //push return value onto return array
+                r.push(
+                  //if value is a number
+                  typeof v=='number'
+                    //convert to string (especially for Infinity, Epsilon, NaN)
+                    ?{'#':v+''}
+                    //else if its an object
+                    :i(v)
+                      //push zap object (either an array or an object)
+                      ?z
+                      //else if undefined
+                      :v==r.U
+                        //reference undefined as -1
+                        ?-1
+                        //otherwise return value as is
+                        :v
+                //push returns length so we get the key by subtracting 1
+                )-1
+              //complete the j.set to add a new jump refference
+              ),
+              //if value is an object
+              i(v)&&(
+                //loop through possible parents
+                E.on(
+                  s,
+                  //check if inherited from parent
+                  (r,p)=>r||=i(v,p)
+                    //if so set name
+                    ?z[p.name]=c(s.get(p)(v))
+                    //otherwise use return
+                    :r,
+                  //start as zero
+                  0
+                //if no parent found loop keys
+                )||E.on(
+                  v,
+                  //for each zap
+                  k=>z[
+                    //if it's an array
+                    i(v,Array)
+                      //a key is the the key
+                      ?k
+                      //otherwise collect key
+                      :c(k)
+                    //set collected value
+                    ]=c(v[k])
+                //done looping keys
+                )
+            //done processing object
+            ),
+              //return jump reference
+              j.get(v)
+            //done registering value
             )
-        //done processing object
-        ),
-          //return jump reference
-          j.get(v)
-        //done registering value
-        )
-    //set zap host
-    )(
-      //if value is an array
-      i(v,Array)
-        //zap is array
-        ?[]
-        //otherwise object
-        :{}
-    //done with collector
-    ),
-    //now collect object
-    c(E.raw($)),
-    //finally strigify the array
-    JSON.stringify(r)
-  //populate jump sorce and substitutions
-  ))(
+      //call internal zap function
+      )(
+        //if value is an array
+        i(v,Array)
+          //zap is array
+          ?[]
+          //otherwise zap is object
+          :{}
+      //done defining collector function
+      ),
+      //now call collector function on raw object
+      c(E.raw($)),
+      //finally strigify the result to an array
+      JSON.stringify(r)
+    //Done defining internal function
+    )
+  //call internal function
+  )(
     //jump source
     new Map,
     //substitution map
-    new Map(E.on(v,k=>[k,v.get(k).simplify]).filter(m=>m[1]).reverse()),
-    //return array
+    new Map(
+      //loop through values map
+      E.on(
+        //see values map below
+        v,
+        //populate our map with simplify functions
+        k=>[k,v.get(k).simplify]
+        //remove anthing that doesn't have a simplify function
+        //reverse to create correct president
+        ).filter(m=>m[1]).reverse()
+      //set substitution map
+      ),
+    //return array (always start with a blank array)
     []
-  //done with encoder
+    //run internal function to return encoded result
   ),
-  //assemble to object
+  //assemble JSON Array to object
   a=$=>((s,r,c)=>(
     //construct object
     c=v=>(
@@ -413,7 +435,7 @@
     getPrototypeOf:_=>E.pt,
     //trap getter
     get:(o,n)=>(
-      //iflooking for raw
+      //if looking for raw
       n=='raw'
         //return object
         ?o
@@ -421,17 +443,17 @@
         :i(
           //if we don't have a name
           o=n===E.U
-            //use parent
+            //test parent
             ?o
             //otherwise use child
             :o[n]
-        //regardles test if object
+        //regardless test if object
         )
-          //proxy wrap new object
+          //if true wrap with proxy
           ?new Proxy(o,E)
           //otherwise no need to wrap
           :o
-    //done with set function
+    //done with get function
     ),
     //trap setter
     set:(o,n,e,s,g=new Map,p,u)=>(
@@ -511,7 +533,7 @@
     //done with appy function
     ),
 
-    //map objects
+    //map objects one universal map of objects
     map:(_=>(...a)=>t(_,...a))(new WeakMap),
     //register objects
     reg:(o,n='',e,s=new Set)=>(
@@ -541,7 +563,6 @@
         E.on(o,k=>E.reg(o[k],c(n,k),o,s))
       //done with registration
       )
-
     //done with register function
     ), 
     //release objects
@@ -590,17 +611,18 @@
       //g=gathered reactions
       //s=sanity check
 
-      //delegator path split
+      //d=delegator path split
       d=l.split('.'),
-      //name of last delegator
+      //n=name of last delegator
       n=d.pop(),
-      //relative path
+      //r=relative path
       r=d.join('.'),
       //is function
-      f=l.endsWith('()'),
-      //if normal return n to d
+      f=f=l.endsWith('()'),
+
+      //if not a wildcard name return n to d
       n!='*'&&!f&&d.push(n),
-      
+
       //traverse objects
       i(o)&&!s.has(v)&&E.of(
         //get object from map
@@ -730,21 +752,28 @@
             //fallback to comparing keys
             :E.on(a).length==E.on(b).length
               //check each key for a perfect match
-              ?E.on(c,(o,k)=>o&&E.is(a[k],b[k]),1)
+            ?E.on(c,(o,k)=>o&&E.is(a[k],b[k]),1)
               //if not we are done
               :0
         //if prototypes don't match we cant
         :0
     //done with compare function
     ),
-    //shorten object assign
+    //object assign
     as:Object.assign,
-    //forEach traverser
+    //traverse object with function
     of:(o,f)=>(o||[]).forEach(f),
+      //o=object
+      //f=function
     //loop traversal
-    on:(o,m=_=>_,r)=>(
+    on:(o,f=_=>_,s)=>(
+      //o=object
+      //f=function
+      //s=start
+
+      //if object
       i(o)
-        //if object loop get keys
+        //get keys array
         ?(
           //if is map
           i(o,Map)
@@ -755,14 +784,14 @@
         //done with heys
         )[
           //if no reduce source
-          r===E.U
+          s===E.U
             //map
             ?'map'
             //otherwise reduce
             :'reduce'
         //now call function with mapped function and return value
-        ](m,r)
-        //
+        ](f,s)
+        //otherwise not an object
         :o
     ),
     //array includes
