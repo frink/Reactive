@@ -112,11 +112,11 @@
 
       //load data from backup to responsive
       E.as(
-          //assign live data
-          r,
-          //the backup
-          a(s.getItem(k)||_.#b)
-          );
+        //assign to live data
+        r,
+        //from the backup
+        a(s.getItem(k)||_.#b)
+      );
       //setup automatic saving to storage
       _.watch('*',n=>s.setItem(k,e(r)))
     //done with backup method
@@ -125,19 +125,18 @@
     //restore(object)
     restore(o){
       //internal shortener
-      const _=this,
-      //if object is passed
-      b=i(o)
-        //use as is
-        ?o
-        //otherwise assemble the object
-        :a(o||_.#b),
-      //current object
-      c=_.#c;
-
-      //search for any extra keys and delete
-      E.on(E.as(c,b),k=>b[k]===a.U&&delete c[k])
-
+      const _=this;
+      //assign restoration
+      E.as(
+        //if object is passed
+        i(o)
+          //use as is
+          ?o
+          //otherwise assemble the object
+          :a(o||_.#b),
+        //current object
+        _.#c
+      );
       //checkpoint backup
       _.backup()
     //done with restore method
@@ -149,8 +148,7 @@
       return new this.constructor(a(e(this.#c)))
     //done with clone method
     }
- 
-    
+
     static register(o,h){
       //register handler
       v.set(o,h)
@@ -309,8 +307,9 @@
         //populate our map with simplify functions
         k=>[k,v.get(k).simplify]
         //remove anthing that doesn't have a simplify function
+        ).filter(m=>m[1])
         //reverse to create correct president
-        ).filter(m=>m[1]).reverse()
+        .reverse()
       //set substitution map
       ),
     //return array (always start with a blank array)
@@ -319,6 +318,10 @@
   ),
   //assemble JSON Array to object
   a=$=>((s,r,c)=>(
+    //s=substitution map
+    //r=reference array
+    //c=construct function
+
     //construct object
     c=v=>(
       //if it's a string
@@ -377,7 +380,7 @@
   ))(
     //substitution map
     new Map([['#',parseInt]].concat(
-      E.on(v,k=>[k.name,v.get(k).reconstitute||(_=>_)])
+      E.on(v,k=>[k.name,v.get(k).reconstruct||(_=>_)])
     )),
     //reference array
     JSON.parse($)
@@ -399,36 +402,69 @@
   //instance check
   i=(a,b=Object)=>a instanceof b,
   //values map
-  v=((w,s,r,c)=>new Map([
+  v=((w,a,r,s)=>new Map([
+    //w=watchMethods
+    //a=assign
+    //r=reconstruct
+    //s=simplify
+    
+    //Object
+    [Object,{
+      [w]:_=>[],
+      [a]:(a,b)=>E.on(Object.assign(a,b),k=>b[k]===a.U&&delete a[k])
+    }],
+    //Array
     [Array,{
       [w]:_=>['push','pop','shift','unshift']
-    }],
-    //Dates
-    [Date,{
-      [s]:v=>v.toJSON(),
-      [r]:v=>new Date(v),
-      [w]:_=>Object.getOwnPropertyNames(Date.prototype)
-        .filter(k=>k.startsWith('set'))
     }],
     //Regular Expressions
     [RegExp,{
       [s]:v=>[v.source,v.flags],
       [r]:v=>new RegExp(...v)
     }],
-    //Maps
-    [Map,{
-      [s]:v=>[...v.entries()],
-      [r]:v=>new Map(v),
-      [w]:_=>['set','delete','clear']
+    //Dates
+    [Date,{
+      [w]:_=>Object.getOwnPropertyNames(Date.prototype).filter(k=>k.startsWith('set')),
+      [a]:(a,b)=>a.setTime(b.getTime()),
+      [r]:v=>new Date(v),
+      [s]:v=>v.toJSON()
     }],
     //Sets
     [Set,{
+      [w]:_=>['add','delete','clear'],
+      [a]:(a,b)=>(
+        //delete stuff that is not common
+        s1.difference(s2).forEach(s=>s1.delete(s)),
+        //add stuff that is new
+        s2.difference(s1).forEach(s=>s1.add(s)),
+        // return the first set
+        s1
+      ),
       [s]:v=>[...v.values()],
-      [r]:v=>new Set([...v]),
-      [w]:_=>['add','delete','clear']
+      [r]:v=>new Set([...v])
+    }],
+    //Maps
+    [Map,{
+      [w]:_=>['set','delete','clear'],
+      [a]:(a,b,c=new Map)=>(
+        //fill replacements array
+        b.forEach((v,k)=>c.set(e(k),v)),
+        //loop through current stuff
+        a.forEach((v,k,d)=>(
+          //check if you have this one
+          c.has(e(k))
+            //if it's different assign
+            ?e(d=c.get(e(k)))!=e(v)&&a.set(k,d)
+            //if it's gone delete
+            :a.delete(k)
+        )),
+        a
+      ),
+      [s]:v=>[...v.entries()],
+      [r]:v=>new Map(v)
     }]
   //done with value map
-  ]))('watchMethods','simplify','reconstitute'),
+  ]))('watchMethods','assign','reconstruct','simplify'),
   //encapsulator
   E={
     //prototype is Reactive.prototype
@@ -505,7 +541,7 @@
       )
     //done with set function
     ),
-    //delete are just setting to undefined
+    //delete property  is just setting to undefined
     deleleProperty:(o,n,e)=>E.set(o,n,E.U,e),
     //trap execution
     apply:(f,o,r,g=new Map,s=new Set,h,w)=>(
@@ -734,9 +770,9 @@
 
     //compare a and b
     is:(a,b,c)=>(
-      //otherwise if not both objects
+      //if not both objects
       !i(a)||!i(b)
-        //just compare with simple equals
+        //compare with simple equals
         ?a===b
         //otherwise if same type
         :a.__proto__==b.__proto__
@@ -752,7 +788,7 @@
             //fallback to comparing keys
             :E.on(a).length==E.on(b).length
               //check each key for a perfect match
-            ?E.on(c,(o,k)=>o&&E.is(a[k],b[k]),1)
+              ?E.on(c,(o,k)=>o&&E.is(a[k],b[k]),1)
               //if not we are done
               :0
         //if prototypes don't match we cant
@@ -760,7 +796,16 @@
     //done with compare function
     ),
     //object assign
-    as:Object.assign,
+    as:(a,b,c)=>(
+      (c=E.on(v).reverse().reduce(
+        //find the simplifier that matches
+        (o,r)=>o||i(a,r)&&v.get(r).assign,
+        //or fail if not found
+        0
+      ))
+        ?c(a,b)
+        :b
+    ),
     //traverse object with function
     of:(o,f)=>(o||[]).forEach(f),
       //o=object

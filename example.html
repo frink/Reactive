@@ -6,7 +6,7 @@
       body {
         background: #111122;
         color:#ffffcc;
-        font-family:sans;
+        font-family:mono;
         font-size:16pt;
         margin: 40pt;
       }
@@ -55,9 +55,9 @@
       console.log("R3 == R1:", R3 == R1);
 
       //but the assign children are the same
-      console.log("R1.obj == R2.obj:", R1.obj == R2.obj);
-      console.log("R1.set == R2.set:", R1.set == R2.set);
-      console.log("R1.map == R2.map:", R1.obj == R2.map);
+      console.log("R1.obj.raw == R2.obj.raw:", R1.obj.raw == R2.obj.raw);
+      console.log("R1.set.raw == R2.set.raw:", R1.set.raw == R2.set.raw);
+      console.log("R1.map.raw == R2.map.raw:", R1.map.raw == R2.map.raw);
 
       //we can store a backup to a string
       let B1 = R1.backup();
