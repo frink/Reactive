@@ -27,7 +27,7 @@
     <h2>Yes!!! - Use the source Luke...</h2>
     <figure></figure>
     <script>
-      //instanciate object
+      /* first instanciate an object */
       let track = {
         obj: {
           text:"Reactive objects rock your world!"
@@ -37,143 +37,177 @@
         set: new Set
       };
 
-      //setup first object to wrap track object
+      /* we can setup Reactive to wrap and track that object */
       let R1 = new Reactive(track);
 
-      //second is an empty object
-      let R2 = new Reactive({});
+      /* we can track a new objec */
+      let R2 = new Reactive({something:'new'});
 
-      //we can clone the object and it will be separate
+      /* we can clone a Reactive to create a different backing store */
       let R3 = R1.clone();
 
-      //we can assign one reactive to another
-      Object.assign(R2,R1);
+      /* and we can reset one Reactive with another */
+      R2.reset(R1);
 
-      //but assignments and clones are differents
-      console.log("R1 == R2:", R1 == R2);
-      console.log("R2 == R3:", R2 == R3);
-      console.log("R3 == R1:", R3 == R1);
+      /* the base objects are different for each one*/
+      console.log("R1 == R2:", Reactive.raw(R1) == Reactive.raw(R2));
+      console.log("R2 == R3:", Reactive.raw(R2) == Reactive.raw(R3));
+      console.log("R3 == R1:", Reactive.raw(R3) == Reactive.raw(R1));
 
-      //but the assign children are the same
-      console.log("R1.obj.raw == R2.obj.raw:", R1.obj.raw == R2.obj.raw);
-      console.log("R1.set.raw == R2.set.raw:", R1.set.raw == R2.set.raw);
-      console.log("R1.map.raw == R2.map.raw:", R1.map.raw == R2.map.raw);
+      /* but the updated children are the same for the source and target */
+      console.log("R1.obj == R2.obj:", Reactive.raw(R1.obj) == Reactive.raw(R2.obj));
+      console.log("R1.set == R2.set:", Reactive.raw(R1.set) == Reactive.raw(R2.set));
+      console.log("R1.map == R2.map:", Reactive.raw(R1.map) == Reactive.raw(R2.map));
 
-      //we can store a backup to a string
+      /* while the children of clone  are distinctly separate */
+      console.log("R1.obj == R3.obj:", Reactive.raw(R1.obj) == Reactive.raw(R3.obj));
+      console.log("R1.set == R3.set:", Reactive.raw(R1.set) == Reactive.raw(R3.set));
+      console.log("R1.map == R3.map:", Reactive.raw(R1.map) == Reactive.raw(R3.map));
+
+      /* we can store a backup of the object to a string */
       let B1 = R1.backup();
       console.log("B1:", B1);
 
-      //we can restore the backup from a string
-      R1.restore(B1);
+      /* and we can reset a backup from a string */
+      R1.reset(B1);
 
-      //we can watch the .obj and all of its children
+      /* we can backup continually from a storage interface */
+      R1.backup('R1',sessionStorage);
+
+      /* we can watch a path and its children */
       R1.watch(
           'obj.*',
           (...a)=>console.log('R1.obj changed',...a)
       );
 
-      //we can set set a new thing to trigger
+      /* we can set something new to trigger that watcher */
       R2.obj.newthing={new:"object"};
 
-      //we can just as easily unwatch .obj and its children
+      /* and the backup is saved aotomatically */
+      console.log('backup:', sessionStorage.getItem('R1'));
+
+      /* we can unwatch a path and its children */
       R1.unwatch('obj.*');
 
-      //we can watch something specific and add extra variables to the trigger
+      /* and  we can also unwatch everything */ 
+      R1.unwatch();
+
+      /* then we can remove the sessionStorage to clean up */
+      sessionStorage.removeItem('R1');
+
+      /* we can watch a specific path with extra variables sent to the trigger */
       R2.watch(
+          //when obj.newthing is changed
           'obj.newthing',
+          //log everything to console
           (...a)=>console.log('NEWTHING',...a),
+          //use these extra variables
           'blue','green','red'
       );
 
-      //we can create sub reactives from current object
+      /* we can create reactives from current reactives */
       let Rset = new Reactive(R1.set);
       let Rmap = new Reactive(R1.map);
       let Robj = new Reactive(R1.obj);
 
-      //But the sub reactives beed to be new Reactives 
+      /* but without instanciating a new Reactive you cannot watch it */
       let obj = R1.obj;
       let objWatch=obj.watch;
       console.log("obj:", obj);
       console.log("objWatch:", objWatch);
 
-      //we can restore a subreactive with a blank object and it writes to the underlying data
+      /* we can reset a Reactive with a blank object and it writes to the underlying data */
       console.log("Robj:", JSON.parse(JSON.stringify(Robj)));
-      console.log("track.obj:", JSON.parse(JSON.stringify(track.obj)));
-      Robj.restore('[{}]');
+      Robj.reset({});
       console.log("Robj:", JSON.parse(JSON.stringify(Robj)));
-      console.log("track.obj:", JSON.parse(JSON.stringify(track.obj)));
+      console.log("R1.obj:", JSON.parse(JSON.stringify(R1.obj)));
 
-      //we can watch a sub object
+      /* we can watch everything in a sub object */
       Rset.watch(
           '*',
           (n,o)=>console.log('Object KEYS in Set:',n,o)
       );
 
-      //or a method of a sub object
+      /* or a specific method of a sub object */
       Rmap.watch(
           'set()',
-          (_,[k])=>(
-            console.log(`Rmap.set('${k}')`,_),
-            Rset.add(k)
+          (o,[k,v])=>(
+            console.log(`Rmap.set('${k}',${v})`,o),
+            R1.set.add(k)
           )
       );
+
+      /* and manually trigger something even from another object */
+      Reactive.trigger(R1.set, '*');
     
-      //they all point to the same
-      Rset.watch(
-          'delete()',
-          (_,[k])=>(
-            console.log(`R2.map.delete(${k})`,_),
+      /* but most of the time we let the trigger run themselves */
+      R2.map.set('key','value');
+
+      /* they all point to the same place regardless of which Reactive we use */
+      R1.watch(
+          'set.delete()',
+          (o,[k])=>(
+            console.log(`R2.map.delete(${k})`,o),
             R2.map.delete(k)
           )
       );
 
-      //You can use use the internal comparison to trigger when value changes
+      /* the real power is when triggers cascade */
+      Rset.delete('key');
+
+      /* we can use compare in triggers to make sure we have an actual data change */
       Robj.watch(
+        // watch children
         '*',
+        //get keys of new object
         (n,o)=>Object.keys(n).map(
+          //compare the data between the new and old objects
           k=>!Reactive.compare(n[k],o[k])&&(
+            //only log if the data changed
             console.log(`Robj.${k} set`),
-            Rmap.set(k,n.raw[k])
+            //go ahead and set the map with the new data to trigger cascade
+            R1.map.set(k,n.raw[k])
           )
         )
       );
 
-      //we can also check for deletions of keys
+      /* we can also check for deletions of values */
       R1.watch(
+        // watch obj children
         'obj.*',
+        //get keys of old object
         (n,o)=>Object.keys(o).map(
+          //check if the new value is undefined
           k=>n[k]==undefined&&(
-            R1.set.delete(k),
-            console.log(`R1.set.add(${k})`)
+            //log the change if deleted
+            console.log(`R1.obj.${k} deleted`),
+            //delete it from the set to trigger a cascade
+            R1.set.delete(k)
           )
         )
       );
 
-      //we can trigger a reaction ourselves
-      Reactive.trigger(Robj, '*');
-    
-      //here we test out repeated setting
+      /* now we can test all these cascades */
       Robj.a=1;
       Robj.a=2;
       Robj.a=2;
       Robj.a=2;
       Robj.b=3;
 
-      //and deleting
       delete Robj.a;
       delete Robj.b;
 
-      //remember that old watch we set - still works even tho we deleted the key
+      /* remember that old watch we set? it still works even tho we deleted the key. */
       Robj.newthing='cool!';
 
-      // now for the grand fanale we'll react to the restoration back to the original object
+      /* now for the grand fanale we'll show how the reset can cause a cascade */
       R1.watch('obj.text',(v,...a)=>setTimeout(_=>console.log((v+'').toUpperCase(),a),100));
 
       //ready, set, go!
-      R1.restore();
+      R1.reset();
     </script>
     <script>
-      document.querySelector('figure').innerHTML = document.scripts[1].text.replaceAll(/\/\/(.*)\n/gi,'\n<h3>//$1</h3>')
+      document.querySelector('figure').innerHTML = document.scripts[1].text.replaceAll(/\/\*(.*)\*\//gi,'\n<h3>//$1</h3>')
     </script>
   </body>
 </html>
