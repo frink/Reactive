@@ -32,10 +32,11 @@
           E.map(o,_.#a).set(''),
           //register children
           E.reg(o),
+          //setup current
+          _.#c=E.get(o),
           //setup proxy
           new Proxy(
-            //setup current
-            _.#c=E.get(o),
+            _,
             //setup root handler
             {
               //if requesting function
@@ -59,7 +60,7 @@
       //c=callback
       //a=arguments
 
-      //console.log('WATCH',p,c,...a);
+      console.log('WATCH',p,c,...a);
 
       //register action for path
       return !!t(this.#a,p).set(c,a)
@@ -118,7 +119,7 @@
       if(!k.trim)throw TypeError('Invalid storage key');
 
       //load data from backup to responsive
-      E.as(
+      _.#c=E.as(
         //assign to live data
         _.#c,
         //from the backup
@@ -134,7 +135,7 @@
       //internal shortener
       const _=this;
       //assign restoration
-      E.as(
+      _.#c=E.as(
         //current object
         _.#c,
         //if object is passed
@@ -192,12 +193,12 @@
     //compare two obects fot changes
     static compare(a,b){
       //run internal compare
-      return E.is(a,b)
+      return E.is(E.raw(a),E.raw(b))
     //done with compare function
     }
 
-    //get raw object
-    static raw(o){
+    //get unwraped object
+    static unwrap(o){
       //return raw object
       return E.raw(o);
     //done with raw
@@ -313,12 +314,12 @@
         v,
         //populate our map with backup functions
         k=>[k,v.get(k).backup]
-        //remove anthing that doesn't have a backup function
-        ).filter(m=>m[1])
-        //reverse to create correct order of president
-        .reverse()
-      //set substitution map
-      ),
+      //remove anthing that doesn't have a backup function
+      ).filter(m=>m[1])
+      //reverse to create correct order of president
+      .reverse()
+    //set substitution map
+    ),
     //return array (always start with a blank array)
     []
     //run internal function to return encoded result
@@ -417,11 +418,18 @@
     
     //Object
     [Object,{
-      [u]:(a,b)=>E.on(Object.assign(a,b),k=>b[k]===a.U&&delete a[k])
+      [u]:(a,b)=>(
+        //delete obsolete keys
+        E.on(a,k=>b[k]===E.U&&delete a[k]),
+        //if the key exists
+        E.on(b,k=>a[k]=E.up(a[k],b[k])),
+        //return original object
+        a
+      )
     }],
     //Array
     [Array,{
-      [m]:['push','pop','shift','unshift']
+      [m]:['push','pop','shift','unshift','splice','concat','fill','sort']
     }],
     //Regular Expressions
     [RegExp,{
@@ -562,21 +570,21 @@
     //deleteProperty is just setting to undefined
     deleleProperty:(o,n,e)=>E.set(o,n,E.U,e),
     //trap execution
-    apply:(f,o,r,g=new Map,s=new Set,h,w)=>(
+    apply:(f,o,r,g=new Map,s=new Set,t,h)=>(
       //f=function
       //o=object
       //r=result
-      //g=
-      //s=
-      //h=handler
-      //w=
+      //g=gathered reactions
+      //s=sanity check
+      //t=trigger reactions
+      //h=held arguments
 
-      //save arguments
-      w=a(e(r)),
+      //held arguments
+      h=a(e(r)),
       //object target must be raw
       o=E.raw(o),
-      //set handler
-      h=E.in(
+      //check if we trigger
+      t=E.in(
         //search for handler
         E.on(
           //values map
@@ -590,20 +598,20 @@
         f.name
       ),
       //enqueue reaction parent if watch method
-      h&&E.enq(o,'*',o,g,s),
+      t&&E.enq(o,'*',o,g,s),
       //run function
       r=f.apply(o,r),
       //enqueues reaction if watched method
-      h&&E.enq([r,w],f.name+'()',o,g,s),
+      t&&E.enq([r,h],f.name+'()',o,g,s),
       //if we are watching run reactions
-      h&&E.run(g),
+      t&&E.run(g),
       //return result
       r
     //done with appy trap
     ),
 
     //map objects to one universal map of objects
-    map:(_=>(...a)=>t(_,...a))(new WeakMap),
+    map:(_=>(...a)=>t(_,...a))(window.wm=new WeakMap),
     //register objects to track
     reg:(o,n='',e,s=new Set)=>(
       //o=object
@@ -705,7 +713,7 @@
             //maintain sanity
             i(v)&&s.add(v),
             //debug
-            //console.log('enqueue:',c(p,l),c(p,n),c(p,v?n:l)),
+            //console.log('ENQUEUE:',c(p,l),c(p,n),c(p,v?n:l)),
             //enqueue parents
             E.enq(o,c(d.length>1?r:p.split('.').pop(),'*'),u||o,g,s),
             //loop paths from the action map
@@ -744,7 +752,7 @@
     run:(m,d=0)=>(
       //sort reactions paths
       [...m.keys()].sort(
-        //sort alphabetically
+        //sort reverse alphabetically
         (a,b)=>a<b?1:-1
       //loop paths
       ).map(
@@ -762,7 +770,7 @@
               //get values
               v=a.shift();
 
-              //console.log('trigger:',v[2]),
+              //console.log('TRIGGER:',v[2]),
 
               //loop path array
               v.pop().map(
@@ -772,13 +780,13 @@
               );
 
               //if something changed
-              //if(v[2].slice(-2)=='()'||!E.is(...v)){
+              if(v[2].slice(-2)=='()'||!E.is(...v)){
                 //wrap returned argument as reactive
                 v[0]=E.get(v[0]);
                 //run callback
                 c(...v,...a)
               //done with check
-              //}
+              }
             //done with callback
             }
           //done looping callbacks
@@ -841,7 +849,7 @@
     //object update
     up:(a,b,c)=>(
       //make sure both have the same constructor
-      a.constructor==b.constructor&&
+      a?.constructor==b?.constructor&&
       // reverse value map and reduce to find updater
       (c=E.on(v).reverse().reduce(
         //find the updater that matches prototype
@@ -876,7 +884,7 @@
             //otherwise use Object keys
             :Object.keys(o||{})
         //done with heys
-        )[
+        ).sort()[
           //if no reduce source
           s===E.U
             //use map

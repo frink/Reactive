@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Reactive Proxy Tests</title>
+    <title>Reactive Proxies</title>
     <script src="reactive.js"></script>
     <style>
       body {
@@ -20,7 +20,7 @@
     </style>
   </head>
   <body>
-    <h1>Reactive objects playground...</h1>
+    <h1>Reactive Proxy Demonstration...</h1>
     <p>Most of the exciting stuff happens behind the scenes.</p>
     <p>Open the console and study the messages there.</p>
     <p>Compare it with the source code and you will see the real power.</p>
@@ -50,19 +50,19 @@
       R2.reset(R1);
 
       /* the base objects are different for each one*/
-      console.log("R1 == R2:", Reactive.raw(R1) == Reactive.raw(R2));
-      console.log("R2 == R3:", Reactive.raw(R2) == Reactive.raw(R3));
-      console.log("R3 == R1:", Reactive.raw(R3) == Reactive.raw(R1));
+      console.log("R1 == R2:", Reactive.unwrap(R1) == Reactive.unwrap(R2));
+      console.log("R2 == R3:", Reactive.unwrap(R2) == Reactive.unwrap(R3));
+      console.log("R3 == R1:", Reactive.unwrap(R3) == Reactive.unwrap(R1));
 
       /* but the updated children are the same for the source and target */
-      console.log("R1.obj == R2.obj:", Reactive.raw(R1.obj) == Reactive.raw(R2.obj));
-      console.log("R1.set == R2.set:", Reactive.raw(R1.set) == Reactive.raw(R2.set));
-      console.log("R1.map == R2.map:", Reactive.raw(R1.map) == Reactive.raw(R2.map));
+      console.log("R1.obj == R2.obj:", Reactive.unwrap(R1.obj) == Reactive.unwrap(R2.obj));
+      console.log("R1.set == R2.set:", Reactive.unwrap(R1.set) == Reactive.unwrap(R2.set));
+      console.log("R1.map == R2.map:", Reactive.unwrap(R1.map) == Reactive.unwrap(R2.map));
 
       /* while the children of clone  are distinctly separate */
-      console.log("R1.obj == R3.obj:", Reactive.raw(R1.obj) == Reactive.raw(R3.obj));
-      console.log("R1.set == R3.set:", Reactive.raw(R1.set) == Reactive.raw(R3.set));
-      console.log("R1.map == R3.map:", Reactive.raw(R1.map) == Reactive.raw(R3.map));
+      console.log("R1.obj == R3.obj:", Reactive.unwrap(R1.obj) == Reactive.unwrap(R3.obj));
+      console.log("R1.set == R3.set:", Reactive.unwrap(R1.set) == Reactive.unwrap(R3.set));
+      console.log("R1.map == R3.map:", Reactive.unwrap(R1.map) == Reactive.unwrap(R3.map));
 
       /* we can store a backup of the object to a string */
       let B1 = R1.backup();
@@ -75,9 +75,11 @@
       R1.backup('R1',sessionStorage);
 
       /* we can watch a path and its children */
-      R1.watch(
+      R2.watch(
           'obj.*',
-          (...a)=>console.log('R1.obj changed',...a)
+          (...a)=>{
+            console.log('R1.obj changed',...a)
+          }
       );
 
       /* we can set something new to trigger that watcher */
@@ -144,7 +146,7 @@
       R2.map.set('key','value');
 
       /* they all point to the same place regardless of which Reactive we use */
-      R1.watch(
+      R2.watch(
           'set.delete()',
           (o,[k])=>(
             console.log(`R2.map.delete(${k})`,o),
@@ -156,17 +158,16 @@
       Rset.delete('key');
 
       /* we can use compare in triggers to make sure we have an actual data change */
-      Robj.watch(
+      R1.watch(
         // watch children
-        '*',
+        'obj.*',
         //get keys of new object
         (n,o)=>Object.keys(n).map(
-          //compare the data between the new and old objects
-          k=>!Reactive.compare(n[k],o[k])&&(
-            //only log if the data changed
-            console.log(`Robj.${k} set`),
-            //go ahead and set the map with the new data to trigger cascade
-            R1.map.set(k,n.raw[k])
+          (k,d)=>(
+            //log data everytime
+            console.log(`Robj.${k} changed`,d=!Reactive.compare(n[k],o[k]),n[k],o[k]),
+            //only trigger if there was a change
+            d&&R1.map.set(k,Reactive.unwrap(n[k]))
           )
         )
       );
@@ -203,7 +204,7 @@
       /* now for the grand fanale we'll show how the reset can cause a cascade */
       R1.watch('obj.text',(v,...a)=>setTimeout(_=>console.log((v+'').toUpperCase(),a),100));
 
-      //ready, set, go!
+      /* ready, set, go! */
       R1.reset();
     </script>
     <script>
