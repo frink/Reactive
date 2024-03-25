@@ -40,7 +40,7 @@
       /* we can setup Reactive to wrap and track that object */
       let R1 = new Reactive(track);
 
-      /* we can track a new objec */
+      /* we can track a new object */
       let R2 = new Reactive({something:'new'});
 
       /* we can clone a Reactive to create a different backing store */
@@ -50,19 +50,19 @@
       R2.reset(R1);
 
       /* the base objects are different for each one*/
-      console.log("R1 == R2:", Reactive.unwrap(R1) == Reactive.unwrap(R2));
-      console.log("R2 == R3:", Reactive.unwrap(R2) == Reactive.unwrap(R3));
-      console.log("R3 == R1:", Reactive.unwrap(R3) == Reactive.unwrap(R1));
+      console.log("R1 == R2:", R1.valueOf() == R2.valueOf());
+      console.log("R2 == R3:", R2.valueOf() == R3.valueOf());
+      console.log("R3 == R1:", R3.valueOf() == R1.valueOf());
 
       /* but the updated children are the same for the source and target */
-      console.log("R1.obj == R2.obj:", Reactive.unwrap(R1.obj) == Reactive.unwrap(R2.obj));
-      console.log("R1.set == R2.set:", Reactive.unwrap(R1.set) == Reactive.unwrap(R2.set));
-      console.log("R1.map == R2.map:", Reactive.unwrap(R1.map) == Reactive.unwrap(R2.map));
+      console.log("R1.obj == R2.obj:", R1.obj.valueOf() == R2.obj.valueOf());
+      console.log("R1.set == R2.set:", R1.set.valueOf() == R2.set.valueOf());
+      console.log("R1.map == R2.map:", R1.map.valueOf() == R2.map.valueOf());
 
       /* while the children of clone  are distinctly separate */
-      console.log("R1.obj == R3.obj:", Reactive.unwrap(R1.obj) == Reactive.unwrap(R3.obj));
-      console.log("R1.set == R3.set:", Reactive.unwrap(R1.set) == Reactive.unwrap(R3.set));
-      console.log("R1.map == R3.map:", Reactive.unwrap(R1.map) == Reactive.unwrap(R3.map));
+      console.log("R1.obj == R3.obj:", R1.obj.valueOf() == R3.obj.valueOf());
+      console.log("R1.set == R3.set:", R1.set.valueOf() == R3.set.valueOf());
+      console.log("R1.map == R3.map:", R1.map.valueOf() == R3.map.valueOf());
 
       /* we can store a backup of the object to a string */
       let B1 = R1.backup();
@@ -75,18 +75,15 @@
       R1.backup('R1',sessionStorage);
 
       /* we can watch a path and its children */
-      R2.watch(
-          'obj.*',
-          (...a)=>{
-            console.log('R1.obj changed',...a)
-          }
+      R1.watch(
+        'obj.*',
+        (...a)=>{
+          console.log('R1.obj changed:',...a)
+        }
       );
 
       /* we can set something new to trigger that watcher */
-      R2.obj.newthing={new:"object"};
-
-      /* and the backup is saved aotomatically */
-      console.log('backup:', sessionStorage.getItem('R1'));
+      R1.obj.newthing={new:"object"};
 
       /* we can unwatch a path and its children */
       R1.unwatch('obj.*');
@@ -167,7 +164,7 @@
             //log data everytime
             console.log(`Robj.${k} changed`,d=!Reactive.compare(n[k],o[k]),n[k],o[k]),
             //only trigger if there was a change
-            d&&R1.map.set(k,Reactive.unwrap(n[k]))
+            d&&R1.map.set(k,n[k].valueOf())
           )
         )
       );

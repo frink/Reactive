@@ -29,7 +29,7 @@
           //add backup
           _.#b=e(o),
           //setup object
-          E.map(o,_.#a).set(''),
+          E.map(o,new WeakRef(_.#a)).set(''),
           //register children
           E.reg(o),
           //setup current
@@ -60,11 +60,19 @@
       //c=callback
       //a=arguments
 
-      console.log('WATCH',p,c,...a);
+      //console.log('WATCH',p,c,...a);
 
       //register action for path
       return !!t(this.#a,p).set(c,a)
     //done with watch method
+    }
+
+    valueOf(){
+      return this.#c.valueOf()
+    }
+
+    toJSON(){
+      return this.valueOf()
     }
 
     //unwatch(path,callback)
@@ -150,10 +158,10 @@
     //done with reset method
     }
 
-    static register(o,h){
-      //register handler
+    //register object handler
+    static handler(o,h){
       v.set(o,h)
-    //done with register method
+    //done with register handler
     }
 
     //trigger object with path
@@ -195,13 +203,6 @@
       //run internal compare
       return E.is(E.raw(a),E.raw(b))
     //done with compare function
-    }
-
-    //get unwraped object
-    static unwrap(o){
-      //return raw object
-      return E.raw(o);
-    //done with raw
     }
   //done with class
   },
@@ -713,13 +714,13 @@
             //maintain sanity
             i(v)&&s.add(v),
             //debug
-            //console.log('ENQUEUE:',c(p,l),c(p,n),c(p,v?n:l)),
+            //console.log('ENQUEUE:',c(p,l)),
             //enqueue parents
             E.enq(o,c(d.length>1?r:p.split('.').pop(),'*'),u||o,g,s),
             //loop paths from the action map
             E.of(
               //find path from map if empty
-              m.get(p=c(p,l)),
+              m.deref()?.get(p=c(p,l)),
               //enqueue each action
               (n,c)=>t(g,p,o).set(c,[
                 //setup values array
@@ -770,8 +771,6 @@
               //get values
               v=a.shift();
 
-              //console.log('TRIGGER:',v[2]),
-
               //loop path array
               v.pop().map(
                 //dig deep to path
@@ -783,6 +782,9 @@
               if(v[2].slice(-2)=='()'||!E.is(...v)){
                 //wrap returned argument as reactive
                 v[0]=E.get(v[0]);
+
+                //console.log('TRIGGER:',v[2],c,v,a),
+
                 //run callback
                 c(...v,...a)
               //done with check
