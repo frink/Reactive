@@ -32,13 +32,13 @@ Class handlers have for methods which are all optional:
 
 ```javascript
 // simplifies the object to basic JSON(Number, String, Array, Object and Null)
-handler.simplify(v)
+handler.backup(v)
 // reconstitutes the object from simplified object
-handler.reconstitute(v) 
-// compares two objects to determine whether something has changed (used to determine reactivity)
-handler.compare(a,b) 
-// returns an array of method names to watch and react to changes
-handler.watchMethods()
+handler.restore(v) 
+// update one object to be a copy of the other
+handler.update(a,b) 
+// an array of method names to watch and react to changes
+handler,methods
 ```
 
 There are four methods on the reactive object itself:
@@ -60,7 +60,7 @@ rObj.backup(key, storageObject=localStorage) //both key and storageObject are op
  * getItem() methods allowing for both transient and long term storage.
  * In all cases backup saves a checkpoints to an internal backup.
  */
-rObj.restore(JSONArray) // Argument is optional
+rObj.reset(JSONArray) // Argument is optional
 /**
  * When nothing is passed it restores from the internal checkpoint.
  * We use flattened JSON to allow circular references and complex
