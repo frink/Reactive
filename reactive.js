@@ -1,3 +1,4 @@
+//TODO: Show date and RegExp examples
 //Reactive Proxy
 ((R,e,a,c,t,i,v,E)=>(
   //R=reactive class
@@ -14,26 +15,22 @@
     //actions map
     #a=new Map;
     //backup string
-    #b;
+    #b=[{}];
     //core object
     #c;
+    //defered object
+    #d;
 
     //constructor(object)
     constructor(o={}){
         //o=object
-        
+
         //return proxied
-        return(_=>(
-          //must be a raw object
-          o=E.raw(o),
-          //add backup
-          _.#b=e(o),
+        return (_=>(
+          //setup deferred object
+          _.#d=new WeakRef(_.#a),
           //setup object
-          E.map(o,new WeakRef(_.#a)).set(''),
-          //register children
-          E.reg(o),
-          //setup current
-          _.#c=E.get(o),
+          _.reset(o),
           //setup proxy
           new Proxy(
             _,
@@ -44,7 +41,11 @@
                 //return bound funtion
                 ?_[n].bind(_)
                 //otherwise return proxied
-                :_.#c[n]
+                :_.#c[n],
+              //if setting pass through
+              set:(o,n,e)=>_.#c[n]=e,
+              //if deleting pass through
+              deleteProperty:(o,n)=>delete _.#c[n]
             //done with root handler
             }
           //done with proxy
@@ -54,60 +55,42 @@
     //done with constructor
     }
 
-    //watch(path,callback,arguments)
-    watch(p,c,...a){
-      //p=path
-      //c=callback
-      //a=arguments
+    //reset(object)
+    reset(o){
+      //o=object
 
-      //console.log('WATCH',p,c,...a);
-
-      //register action for path
-      return !!t(this.#a,p).set(c,a)
-    //done with watch method
-    }
-
-    valueOf(){
-      return this.#c.valueOf()
-    }
-
-    toJSON(){
-      return this.valueOf()
-    }
-
-    //unwatch(path,callback)
-    unwatch(p,c){
-      //p=path
-      //c=callback
-
-      //console.log('UNWATCH',p,c);
-
-      //reduce action to boolean
-      return !!(
-        //do we have a path
-        p
-          //find it or fake it
-          ?this.#a.get(p)||new Map
-          //or use everything
-          :(c=0,this.#a)
-      //find action
-      )[
-        //do we have a callback
-        c
-          //delete it
-          ?'delete'
-          //oterwise clear all
-          :'clear'
-      //pass callback
-      ](c)
-    //done with unwatch method
-    }
-
-    //create a new map of the current reactive obj
-    clone(){
-      //generate a new data tree and pass to constructor
-      return new this.constructor(a(e(this.#c)))
-    //done with clone method
+      //internal shortener
+      ((_,e)=>(
+        //get entity
+        e=E.raw(_.#c),
+        //remove old map
+        E.map(e||o).delete(_.#d),
+        //release children
+        E.rel(e,'',e),
+        //must be a raw object
+        o=E.raw(o||e),
+        //assign restoration
+        _.#c=E.as(
+          //current object
+          e,
+          //if object is passed
+          i(o)
+            //use as is
+            ?o
+            //otherwise assemble the object
+            :a(o||_.#b)
+        ),
+        //get new value
+        o=E.raw(_.#c),
+        //setup object
+        E.map(o,_.#d).set(''),
+        //register children
+        E.reg(o),
+        //checkpoint backup
+        _.backup()
+      //populate closure with this
+      ))(this)
+    //done with reset method
     }
 
     //backup(key, storage)
@@ -138,24 +121,64 @@
     //done with backup method
     }
 
-    //reset(object)
-    reset(o){
-      //internal shortener
-      const _=this;
-      //assign restoration
-      _.#c=E.as(
-        //current object
-        _.#c,
-        //if object is passed
-        i(o)
-          //use as is
-          ?o
-          //otherwise assemble the object
-          :a(o||_.#b)
-      );
-      //checkpoint backup
-      _.backup()
-    //done with reset method
+    //watch(path,callback,arguments)
+    watch(p,c,...a){
+      //p=path
+      //c=callback
+      //a=arguments
+
+      //console.log('WATCH',p,c,...a);
+
+      //register action for path
+      return !!t(this.#a,p).set(c,a)
+    //done with watch method
+    }
+
+    //unwatch(path,callback)
+    unwatch(p,c){
+      //p=path
+      //c=callback
+
+      //console.log('UNWATCH',p,c);
+
+      //reduce action to boolean
+      return !!(
+        //do we have a path
+        p
+          //find it or fake it
+          ?this.#a.get(p)||new Map
+          //or use everything
+          :(c=0,this.#a)
+      //find action
+      )[
+        //do we have a callback
+        c
+          //delete it
+          ?'delete'
+          //oterwise clear all
+          :'clear'
+      //pass callback
+      ](c)
+    //done with unwatch method
+    }
+
+    //get value of Reactive
+    valueOf(){
+      return E.raw(this.#c)
+    }
+
+    //send value to JSON
+    toJSON(){
+      return E.as({},this.valueOf())
+    }
+
+    //create a new map of the current reactive obj
+    static clone(r){
+      if(!i(r,R))throw TypeError('Invalid '+R.name);
+
+      //generate a new Reactive
+      return new R(a(e(r.valueOf())))
+    //done with clone method
     }
 
     //register object handler
@@ -502,7 +525,7 @@
       n==E.sym
         //return object
         ?o
-        //if object
+        //of object
         :i(
           //if we don't have a name
           o=n===E.U
@@ -519,7 +542,7 @@
     //done with gettter trap
     ),
     //trap setter
-    set:(o,n,e,s,g=new Map,p,u)=>(
+    set:(o,n,e,s=1,g=new Map,p,u)=>(
       //o=object
       //n=name
       //e=entity
@@ -565,11 +588,13 @@
         //done activating
         )
       //done processing
-      )
+      ),
+      //always return true
+      1
     //done with setter trap
     ),
     //deleteProperty is just setting to undefined
-    deleleProperty:(o,n,e)=>E.set(o,n,E.U,e),
+    deleteProperty:(o,n)=>E.set(o,n,E.U),
     //trap execution
     apply:(f,o,r,g=new Map,s=new Set,t,h)=>(
       //f=function
@@ -682,7 +707,7 @@
     //done with release
     ),
     //enqueue reactions
-    enq:(v,l,o,g,s=new Set,d,n,r,f)=>(
+    enq:(v,l,o,g,d,n,r,f)=>(
       //v=value currently
       //l=label path
       //o=object parent
@@ -696,119 +721,112 @@
       //r=relative path
       r=d.join('.'),
       //is function
-      f=f=l.endsWith('()'),
+      f=l.endsWith('()'),
 
       //if not a wildcard name return n to d
       n!='*'&&!f&&d.push(n),
 
       //traverse objects
-      i(o)&&!s.has(v)&&E.of(
+      E.of(
         //get object from map
         E.map(o),
-        //loop path map
-        (p,m)=>E.of(
-          //each path
-          p,
-          //loop item paths
-          (u,p)=>(
-            //maintain sanity
-            i(v)&&s.add(v),
-            //debug
-            //console.log('ENQUEUE:',c(p,l)),
-            //enqueue parents
-            E.enq(o,c(d.length>1?r:p.split('.').pop(),'*'),u||o,g,s),
-            //loop paths from the action map
-            E.of(
-              //find path from map if empty
-              m.deref()?.get(p=c(p,l)),
-              //enqueue each action
-              (n,c)=>t(g,p,o).set(c,[
-                //setup values array
-                [
-                  //if function send return and arguments
-                  f?v[0]:o,
-                  //otherwise send new and old values
-                  f?v[1]:a(e(v)),
-                  //path string
-                  p,
-                  //dispatch array
-                  d
-                //done with values
-                ],
-                //now saved arguments
-                ...n
-              //done enqueuing action
-              ])
-            //done looping paths
+        //if the weakmap runs out
+        (p,w,m)=>!i(m=w.deref())
+          //p=path map
+          //w=weakref
+          //m=map of actions
+
+          //delete actions map
+          ?E.map(o).delete(w)
+          //if not not run out yet
+          :E.of(
+            //each path path
+            p,
+            //loop item paths 
+            (u,p,s)=>t(g,m).has(s=c(p,l))||(
+              //add to gathered reactions
+              t(g,m).set(s,[
+                //if function send return and arguments
+                f?v[0]:o,
+                //otherwise send new and old values
+                f?v[1]:a(e(v)),
+                //string path
+                s,
+                //dispatch array
+                d
+              ]),
+              //debug report
+              //console.log(`ENQUEUE ${s}:`,t(g,m).get(s)),
+              //enqueue parents
+              E.enq(o,c(d.length>1?r:p.split('.').pop(),'*'),u||o,g)
             )
-          //done looping item paths
           )
-        //done looping path map
-        )
-      //done traversinguobjects
       )
+
     //done with enqueuing
     ),
     //run reactions
-    run:(m,d=0)=>(
-      //sort reactions paths
-      [...m.keys()].sort(
-        //sort reverse alphabetically
-        (a,b)=>a<b?1:-1
-      //loop paths
-      ).map(
-        //loop objects
-        k=>E.of(
-          //traverse key
-          t(m,k),
-          //loop callbacks
-          o=>E.of(
-            o,
-            //do callback
-            async(a,c,v)=>{
-              ++d;
+    run:(g,d=0)=>(
+      //g=gathered responses
+      //d=dispatch counter
+      //console.log('RUN:',g),
 
-              //get values
-              v=a.shift();
+      //loop reactions
+      E.on(
+        //from gathered reactions
+        g,
+        //loop maps
+        (m,r)=>E.on(
+          //m=map locator
+          //r=retried values
 
-              //loop path array
+          //get retrived values
+          r=g.get(m),
+          //loop through paths
+          (p,t)=>E.on(
+            //p=path string
+            //t=triggers
+
+            //loop triggers
+            t=m.get(p),
+            //loo functions
+            async(f,n,v)=>(
+              //f=function
+              //n=additial arguments
+
+              //get array of additional arguments
+              n=t.get(f),
+              //get values to pass to the function
+              v=[...r.get(p)],
+              //loop path array to get proper object
               v.pop().map(
-                //dig deep to path
+                //dig deep to path of object
                 k=>v[0]=v[0]?.[k]
               //done looping
-              );
-
-              //if something changed
-              if(v[2].slice(-2)=='()'||!E.is(...v)){
-                //wrap returned argument as reactive
-                v[0]=E.get(v[0]);
-
-                //console.log('TRIGGER:',v[2],c,v,a),
-
-                //run callback
-                c(...v,...a)
-              //done with check
-              }
-            //done with callback
-            }
-          //done looping callbacks
+              ),
+              //increment dispatch counter
+              d++,
+              //debug
+              //console.log(`MAPPED ${p}:`,f,...v,...n),
+              //run function
+              f(...v,...n)
+            )
           )
-        //done looping objects
         )
-      //done looping paths
       ),
       //return dispatched
       d
     //done with running
     ),
+
     //get raw object
     raw:o=>i(o,R)
       //get raw object
       ?o[E.sym]
       //otherwise it's fine
       :o,
-    //reactive symbol
-    sym:Symbol.for('ReactiveProxy'),
+    //symbol
+    sym:Symbol.for(R.name),
 
     //compare a and b
     is:(a,b,c)=>(
@@ -830,7 +848,7 @@
             //fallback to comparing keys
             :E.on(a).length==E.on(b).length
               //check each key for a perfect match
-              ?E.on(c,(o,k)=>o&&E.is(a[k],b[k]),1)
+              ?E.on(a,(o,k)=>o&&E.is(a[k],b[k]),1)
               //if not we are done
               :0
         //if prototypes don't match we cant

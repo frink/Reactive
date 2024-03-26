@@ -41,10 +41,10 @@
       let R1 = new Reactive(track);
 
       /* we can track a new object */
-      let R2 = new Reactive({something:'new'});
+      let R2 = new Reactive();
 
       /* we can clone a Reactive to create a different backing store */
-      let R3 = R1.clone();
+      let R3 = Reactive.clone(R1);
 
       /* and we can reset one Reactive with another */
       R2.reset(R1);
@@ -155,16 +155,17 @@
       Rset.delete('key');
 
       /* we can use compare in triggers to make sure we have an actual data change */
-      R1.watch(
+      R2.watch(
         // watch children
         'obj.*',
         //get keys of new object
         (n,o)=>Object.keys(n).map(
-          (k,d)=>(
-            //log data everytime
-            console.log(`Robj.${k} changed`,d=!Reactive.compare(n[k],o[k]),n[k],o[k]),
-            //only trigger if there was a change
-            d&&R1.map.set(k,n[k].valueOf())
+          //only trigger if there was a change
+          k=>!Reactive.compare(n[k],o[k])&&(
+            //log changes
+            console.log(`Robj.${k} changed`,n[k],o[k]),
+            //send to set
+            Rmap.set(k,n[k].valueOf())
           )
         )
       );
