@@ -34,7 +34,9 @@
         },
         arr: [40,41,42],
         map: new Map,
-        set: new Set
+        set: new Set,
+        date: new Date,
+        regexp: /(?:)/g
       };
 
       /* we can setup Reactive to wrap and track that object */
@@ -108,6 +110,7 @@
       let Rset = new Reactive(R1.set);
       let Rmap = new Reactive(R1.map);
       let Robj = new Reactive(R1.obj);
+      let Rdate = new Reactive(R1.date);
 
       /* but without instanciating a new Reactive you cannot watch it */
       let obj = R1.obj;
@@ -120,6 +123,12 @@
       Robj.reset({});
       console.log("Robj:", JSON.parse(JSON.stringify(Robj)));
       console.log("R1.obj:", JSON.parse(JSON.stringify(R1.obj)));
+
+      /* or an updated object */
+      console.log("Rdate:", JSON.parse(JSON.stringify(Rdate)));
+      Rdate.reset(new Date());
+      console.log("Rdate:", JSON.parse(JSON.stringify(Rdate)));
+      console.log("R1.date:", JSON.parse(JSON.stringify(R1.date)));
 
       /* we can watch everything in a sub object */
       Rset.watch(

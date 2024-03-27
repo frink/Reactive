@@ -1,4 +1,3 @@
-//TODO: Show date and RegExp examples
 //Reactive Proxy
 ((R,e,a,c,t,i,v,E)=>(
   //R=reactive class
@@ -164,12 +163,7 @@
 
     //get value of Reactive
     valueOf(){
-      return E.raw(this.#c)
-    }
-
-    //send value to JSON
-    toJSON(){
-      return E.as({},this.valueOf())
+      return this.#c.valueOf()
     }
 
     //create a new map of the current reactive obj
@@ -637,7 +631,7 @@
     ),
 
     //map objects to one universal map of objects
-    map:(_=>(...a)=>t(_,...a))(window.wm=new WeakMap),
+    map:(_=>(...a)=>t(_,...a))(new WeakMap),
     //register objects to track
     reg:(o,n='',e,s=new Set)=>(
       //o=object
@@ -762,7 +756,6 @@
             )
           )
       )
-
     //done with enqueuing
     ),
     //run reactions
