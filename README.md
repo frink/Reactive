@@ -1,6 +1,10 @@
-# Reactive Proxy Spec
+# Reactive Proxies
 
-Reactive objects is a simple way to bring reactivity to any JavaScript application. It requires ES6 features. This presents as a polyfill and reference implementation for eventual inclusion into ES7. Proposals for ECMA and W3C are in draft and expected to be referenced here once submitted.
+Reactive Proxies is a simple way to bring reactivity to any JavaScript application. It requires ES6 features.
+
+This is a polyfill and reference implementation for proposal of eventual inclusion in Javascript Proper.
+
+Proposal for ECMA is in draft and expected to be referenced here once submitted.
 
 Instantiation is simple:
 
@@ -8,13 +12,17 @@ Instantiation is simple:
 robj = new Reactive(obj);
 ```
 
-There are two static methods on the class:
+There are four static methods on the class:
 
 ```javascript
 // triggers a reaction at the specified path
 Reactive.trigger(rObj, path)
 // registers new reactive handlers for a given class
 Reactive.register(class, handler)
+// compare two reactive objects
+Reactive.compare(rObj1, rObj2)
+// clone an existing reactive object
+Reactive.clone(rObj)
 ```
 
 Three path types are allowed for triggering:

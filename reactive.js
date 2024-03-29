@@ -176,7 +176,7 @@
     }
 
     //register object handler
-    static handler(o,h){
+    static register(o,h){
       v.set(o,h)
     //done with register handler
     }
@@ -759,58 +759,67 @@
     //done with enqueuing
     ),
     //run reactions
-    run:(g,d=0)=>(
-      //g=gathered responses
-      //d=dispatch counter
-      //console.log('RUN:',g),
-
-      //loop reactions
-      E.on(
-        //from gathered reactions
-        g,
-        //loop maps
-        (m,r)=>E.on(
+    run:g=>E.on(
+      //from gathered reactions
+      g,
+      //loop maps
+      (r,m,s)=>(
+        E.on(
           //m=map locator
-          //r=retried values
+          //r=saved values
 
-          //get retrived values
-          r=g.get(m),
+          //get saved values
+          s=g.get(m),
           //loop through paths
-          (p,t)=>E.on(
-            //p=path string
-            //t=triggers
+          (r,p,t)=>(
+            E.on(
+              //p=path string
+              //t=triggers
 
-            //loop triggers
-            t=m.get(p),
-            //loo functions
-            async(f,n,v)=>(
-              //f=function
-              //n=additial arguments
+              //loop triggers
+              t=m.get(p)||[],
+              //loop functions
+              (r,f,n,v)=>(
+                //f=function
+                //n=additial arguments
 
-              //get array of additional arguments
-              n=t.get(f),
-              //get values to pass to the function
-              v=[...r.get(p)],
-              //loop path array to get proper object
-              v.pop().map(
-                //dig deep to path of object
-                k=>v[0]=v[0]?.[k]
-              //done looping
+                //get array of additional arguments
+                n=t.get(f),
+                //get values to pass to the function
+                v=[...s.get(p)],
+                //loop path array to get proper object
+                v.pop().map(
+                  //dig deep to path of object
+                  k=>v[0]=v[0]?.[k]
+                //done looping
+                ),
+                //add function to run array
+                r.unshift([f,v,n]),
+                //return run array
+                r
               ),
-              //increment dispatch counter
-              d++,
-              //debug
-              //console.log(`MAPPED ${p}:`,f,...v,...n),
-              //run function
-              f(...v,...n)
-            )
-          )
-        )
+              //into run array
+              r
+            ),
+            //into run array
+            r
+          ),
+          //into run array
+          r
+        ),
+        r
       ),
-      //return dispatched
-      d
-    //done with running
-    ),
+      //run array
+      []
+    //loop run array
+    ).map(
+      //trigger each function
+      ([f,v,n])=>(
+        //debug report
+        //console.log('TRIGGER:',f,...v,...n),
+        f(...v,...n)
+      )
+    ).length,
 
     //get raw object
     raw:o=>i(o,R)
