@@ -3,11 +3,12 @@
 :a
 N
 $!ba
+s/^/\r/g
 s/\n/\r/g
 s/\s*\r\s*/\r/g
 s/\r\+/\r/g
 s/\t\+/ /g
-s/\r\/\/[^\r]*/\r/g
+s/\/\/[^\r]*/\r/g
 s/\r \+/\r/g
 s/\r?\s?else\s?\r*/\relse /g
 s/\r?\s?if\s?\r*/\rif /g
